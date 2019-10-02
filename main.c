@@ -7,11 +7,9 @@
 
 #define F_CPU 16000000
 #define tStackSize = 60;
+#define timeDel = 0;
+
 #include "include/FreeRTOS.h"
-#include "include/task.h"
-#include "include/timers.h"
-#include "include/stack_macros.h"
-#include 
 
 static uint16_t ticks = 0;
 uint16_t segtab[] = {0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 0x07, 0x7F, 0x6F, 0x77, 0x7C, 0x39, 0x5E, 0x79, 0x71};
@@ -24,14 +22,14 @@ void main()
     DDRD = 0xFF;
     DDRE = 0x00;
 	
-	TCNT1 = 0;
+	TCNT1 = timeDel;
 	TCCR1A = 0x00;			//normal mode
     TCCR1B = (0b001<<CS10);	//no prescaler
     TCCR1C = 0x00;
 	
 	sei();
 	
-    while (1) 
+    /*while (1) 
 	{
 		if((PINE&0x01)==0)
 			Val--;
@@ -39,13 +37,18 @@ void main()
 			Val++;
 		else
 			Val=Val;
+	}*/
+	
+	while(1)
+	{
+		vTaskStartScheduler();
 	}
 }
 
 ISR(TIMER1_OVF_vect)
 {
 	RTOS();					//call RTOS atomic task
-	TCNT1 = 0;
+	TCNT1 = timeDel;
 }
 
 void RTOS()
