@@ -3,6 +3,8 @@
  *
  * Created: 9/18/2019 9:25:19 AM
  * Author : mlavoie4
+ *
+ *OS libraries were obtained from freertos.org
  */ 
 
 #define F_CPU 16000000
@@ -15,12 +17,12 @@ uint16_t segtab[] = {0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 0x07, 0x7F, 0x6F,
 uint16_t Val = 0x0000;
 uint16_t strobereg;
 
+SemaphoreHandle_t LEDsem;
+BaseType_t xReturnedLED;
+TaskHandle_t xHandleLED = NULL;
+
 void main()
 {
-	SemaphoreHandle_t LEDsem;
-    BaseType_t xReturnedLED;
-	TaskHandle_t xHandleLED = NULL;
-	
 	//create LED semaphore
 	LEDsem = xSemaphoreCreateBinary();
 	
@@ -30,7 +32,15 @@ void main()
 	vTaskStartScheduler();
 }
 
-void ledStrobe(void * pvParameters)
+void taskController()
+{
+	if ((PINE&0x01)!=0 || (PINE&0x02)!=0)
+		vTaskSuspend(xHandleLED);
+	else
+		vTaskResume(xHandleLED);
+}
+
+void ledStrobe()
 {
 	while(1)
 	{	
