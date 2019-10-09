@@ -65,7 +65,7 @@ void RTOS()
 		BaseType_t xReturned;
 		TaskHandle_t xHandle = NULL;
 		
-		xReturned = xTaskCreate(ledStrobe, "LED", tStackSize, NULL, 1, NULL);
+		xReturned = xTaskCreate(ledStrobe, "LED", tStackSize, NULL, 1, &xHandle);
 	}
 }
 
@@ -78,29 +78,35 @@ void RTOS()
 
 void ledStrobe(void * pvParameters)
 {
-	sei();
+	while(1)
+	{	
+		if((PINE&0x01)==0)
+			Val--;
+		else if((PINE&0x02)==0)
+			Val++;
+		else
+			Val=Val;
 		
-	uint8_t D=0;
+		uint8_t D=0;
 	
-	switch(strobereg)
-	{
-		case 3:
-			D = (Val)%16; break;
-		case 2:
-			D = (Val/16)%16; break;
-		case 1:
-			D = (Val/256)%16; break;
-		case 0:
-			D = (Val/4096)%16; break;
+		switch(strobereg)
+		{
+			case 3:
+				D = (Val)%16; break;
+			case 2:
+				D = (Val/16)%16; break;
+			case 1:
+				D = (Val/256)%16; break;
+			case 0:
+				D = (Val/4096)%16; break;
+		}
+	
+		PORTB = 0;					//turns off the display
+		PORTD = segtab[D];
+		PORTB = 1<<strobereg;
+		strobereg = (strobereg + 1) & 3;
 	}
 	
-	PORTB = 0;					//turns off the display
-	PORTD = segtab[D];
-	PORTB = 1<<strobereg;
-	strobereg = (strobereg + 1) & 3;
-	return 2;
-	
-	cli();
 	
 	vTaskDelete(NULL);
 }
