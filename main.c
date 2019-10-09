@@ -17,8 +17,12 @@ uint16_t strobereg;
 
 void main()
 {
+	SemaphoreHandle_t LEDsem;
     BaseType_t xReturnedLED;
 	TaskHandle_t xHandleLED = NULL;
+	
+	//create LED semaphore
+	LEDsem = xSemaphoreCreateBinary();
 	
 	//Create LED task
 	xReturnedLED = xTaskCreate(ledStrobe, "LED", configMINIMAL_STACK_SIZE, NULL, 1, &xHandleLED);
@@ -30,6 +34,7 @@ void ledStrobe(void * pvParameters)
 {
 	while(1)
 	{	
+		wait(LEDsem,1000);
 		if((PINE&0x01)==0)
 			Val--;
 		else if((PINE&0x02)==0)
@@ -55,4 +60,6 @@ void ledStrobe(void * pvParameters)
 		PORTD = segtab[D];
 		PORTB = 1<<strobereg;
 		strobereg = (strobereg + 1) & 3;
+		signal(LEDsem);
 	}
+}
