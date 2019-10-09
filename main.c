@@ -6,7 +6,6 @@
  */ 
 
 #define F_CPU 16000000
-#define tStackSize = 60;
 #define timeDel = 0;
 
 #include "include/FreeRTOS.h"
@@ -18,63 +17,14 @@ uint16_t strobereg;
 
 void main()
 {
-    DDRB|= 0xFF;
-    DDRD = 0xFF;
-    DDRE = 0x00;
+    BaseType_t xReturnedLED;
+	TaskHandle_t xHandleLED = NULL;
 	
-	TCNT1 = timeDel;
-	TCCR1A = 0x00;			//normal mode
-    TCCR1B = (0b001<<CS10);	//no prescaler
-    TCCR1C = 0x00;
+	//Create LED task
+	xReturnedLED = xTaskCreate(ledStrobe, "LED", configMINIMAL_STACK_SIZE, NULL, 1, &xHandleLED);
 	
-	sei();
-	
-    /*while (1) 
-	{
-		if((PINE&0x01)==0)
-			Val--;
-		else if((PINE&0x02)==0)
-			Val++;
-		else
-			Val=Val;
-	}*/
-	
-	while(1)
-	{
-		vTaskStartScheduler();
-	}
+	vTaskStartScheduler();
 }
-
-ISR(TIMER1_OVF_vect)
-{
-	RTOS();					//call RTOS atomic task
-	TCNT1 = timeDel;
-}
-
-void RTOS()
-{
-	ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
-	{
-		uint8_t ledState;
-		//master variable, or all task states to see if any are actively running
-		//ticks++;
-		
-		//logic for task enables
-		//if ((ticks % 1024 == 0) && ledState == 0) ledState = ledStrobe();
-		
-		BaseType_t xReturned;
-		TaskHandle_t xHandle = NULL;
-		
-		xReturned = xTaskCreate(ledStrobe, "LED", tStackSize, NULL, 1, &xHandle);
-	}
-}
-
-/* Task States:
-	Ready		0
-	Run			1
-	Complete	2
-	Dead		3
-*/
 
 void ledStrobe(void * pvParameters)
 {
@@ -106,7 +56,3 @@ void ledStrobe(void * pvParameters)
 		PORTB = 1<<strobereg;
 		strobereg = (strobereg + 1) & 3;
 	}
-	
-	
-	vTaskDelete(NULL);
-}
